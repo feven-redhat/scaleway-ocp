@@ -1,0 +1,10 @@
+[bastion]
+bastion ansible_host=51.15.212.242 id=82f28e6b-ccef-4cc3-b313-084674082b6d #To update
+
+[bootstrap]
+bootstrap_host1 ansible_host=51.15.204.17 id=97050aaa-1fde-4085-886a-fbdb54bb5d59  #To update
+
+[master]
+master_host1 ansible_host=163.172.139.49 id=260b24a4-f5bf-4882-bd35-46f2dd49b98d  #To update
+master_host2 ansible_host=51.15.208.188 id=3ede3fa7-1494-4dbe-9e21-2fac5df23163  #To update
+master_host3 ansible_host=51.15.212.109 id=12a1453f-d59d-4b76-948b-a8bec32aa0e5  #To update

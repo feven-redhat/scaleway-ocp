@@ -1,0 +1,109 @@
+---
+# tasks file for create_ignition
+- name: install packages
+  yum:
+    name: 
+      - httpd
+    state: latest
+
+- name: start service httpd, if not started
+  service:
+    name: httpd
+    state: started
+
+- name: Check if openshift CLI exist 
+  stat:
+    path: /usr/local/bin/oc
+  register: oc
+
+
+- name: Download the openshift CLI 
+  get_url:
+    url:  "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_release }}/openshift-client-linux-{{ ocp_release }}.tar.gz"
+    dest: /tmp/openshift-cli.tar.gz
+  when: oc.stat.exists==false
+
+- name: Extract openshift CLI
+  unarchive:
+    src: /tmp/openshift-cli.tar.gz
+    dest: /usr/local/sbin
+    remote_src: yes
+  when: oc.stat.exists==false
+
+- name: Check if openshift installer exist
+  stat:
+    path: /usr/local/sbin/openshift-install
+  register: openshift_install
+
+- name: Download openshift installer
+  get_url:
+    url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ ocp_release }}/openshift-install-linux-{{ ocp_release }}.tar.gz"
+    dest: /tmp/openshift-installer.tar.gz
+  when: openshift_install.stat.exists==false
+
+- name: Extract openshift installer
+  unarchive:
+    src: /tmp/openshift-installer.tar.gz
+    dest: /usr/local/sbin
+    remote_src: yes
+  when: openshift_install.stat.exists==false
+
+- name: Check if rhcos has already been downloaded
+  stat:
+    path: "/var/www/html/rhcos.raw.gz"
+  register: rhcos
+
+- name: Download rhcos
+  get_url:
+    url: "{{ rhcos_mirror_url }}"
+    dest: /var/www/html/rhcos.raw.gz
+  when: rhcos.stat.exists==false
+
+- name: Create a directory for config if it does not exist
+  file:
+    path: "$HOME/{{ cluster_name }}"
+    state: directory
+
+- name: Create install config file from a template
+  template:
+    src: install-config.j2
+    dest: "$HOME/{{ cluster_name }}/install-config.yaml"
+
+      #- name: Copy install config file from a template
+      #copy:
+      #src: $HOME/{{ cluster_name }}/install-config.yaml
+      #dest: /tmp/install-config.yaml
+      #remote_src: yes
+
+
+
+- name: Manifest creator script
+  template:
+    src: create-manifest-ignition.sh.j2
+    dest: "$HOME/{{ cluster_name }}/create-manifest-ignition.sh"
+    mode: 700
+
+- name: run manifest and ignition script
+  command: "$HOME/{{ cluster_name }}/create-manifest-ignition.sh"
+  become: true
+
+- name: Put ignition on webserver
+  copy:
+    src: "$HOME/{{ cluster_name }}/{{ item }}.ign"
+    dest: "/var/www/html/{{ item }}.ign"
+    remote_src: yes
+  loop: 
+    - bootstrap
+    - master 
+
+- name: Change httpd ownership, group and permissions
+  file:
+    path: /var/www/html
+    owner: apache
+    group: apache
+    mode: '0700'
+    recurse: yes
+
+- name: Apply new SELinux file context to filesystem
+  command: restorecon -R /var/www/html
+

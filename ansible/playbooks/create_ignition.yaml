@@ -1,0 +1,15 @@
+---
+- name: create_ignition
+  hosts: bastion
+  vars:
+    ansible_ssh_private_key_file: ~/.ssh/scaleway
+    ansible_user: root
+    ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
+    ansible_python_interpreter: /usr/bin/python3
+    ocp_release: 4.11.0
+    #rhcos_mirror_url:  https://mirror.openshift.com/pub/openshift-v4/dependencies/rhcos/4.11/4.11.0/rhcos-4.11.0-x86_64-metal.x86_64.raw.gz
+    rhcos_mirror_url: "http://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.8/latest/rhcos-metal.x86_64.raw.gz"
+  vars_files:
+    - ../variables.yaml
+  roles:
+    - ../roles/create_ignition

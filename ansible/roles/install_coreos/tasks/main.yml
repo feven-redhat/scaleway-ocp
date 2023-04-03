@@ -1,0 +1,74 @@
+---
+- name: Check if coreos installer exist
+  stat:
+    path: /usr/local/bin/coreos-installer 
+  register: coreos
+
+
+- name: Download the coreos-installer CLI 
+  get_url:
+    url:  "http://mirror.openshift.com/pub/openshift-v4/x86_64/clients/coreos-installer/latest/coreos-installer"
+    dest: /usr/local/bin/coreos-installer
+  when: coreos.stat.exists==false
+
+- name: Change coreos-installer permissions
+  file:
+    path: /usr/local/bin/coreos-installer
+    mode: '0700'
+
+- name: Download libssl1.1 package
+  get_url:
+    url: http://nz2.archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.17_amd64.deb
+    dest: /tmp/libssl1.1_1.1.1f-1ubuntu2.17_amd64.deb
+  loop: "{{ group_names }}"
+  when: "'{{ item }}' in group_names"
+
+- name: Install libssl1.1 package
+  shell: "dpkg -i /tmp/libssl1.1_1.1.1f-1ubuntu2.17_amd64.deb"
+  loop: "{{ group_names }}"
+  when: "'{{ item }}' in group_names"
+
+- name: coreos install ignition
+  shell: "coreos-installer install --ignition-url=http://{{ scaleway_bastion_ip }}/{{ item }}.ign --insecure-ignition --image-url=http://mirror.openshift.com/pub/openshift-v4/x86_64/dependencies/rhcos/4.8/latest/rhcos-metal.x86_64.raw.gz /dev/vda --insecure"
+  loop: "{{ group_names }}"
+  when: "'{{ item }}' in group_names"
+
+
+- name: Check if scw cli exist
+  stat:
+    path: /usr/local/bin/scw
+  register: scw
+
+
+- name: Download the scw CLI
+  get_url:
+    url:  "https://github.com/scaleway/scaleway-cli/releases/download/v2.5.4/scaleway-cli_2.5.4_linux_amd64"
+    dest: /usr/local/bin/scw
+  when: scw.stat.exists==false
+
+- name: Change scw permissions
+  file:
+    path: /usr/local/bin/scw
+    mode: u+x
+
+- name: copy scaleway config
+  copy:
+    src: /tmp/scaleway-config.yaml
+    dest: /tmp/config.yaml
+   
+
+
+      #- name: Configure Scaleway instance
+      # shell:
+      # |-
+      #export SCW_CONFIG_PATH=/tmp/config.yaml
+      #scw instance server update {{ hostvars[inventory_hostname]['id'] }} boot-type=local
+      #scw instance server reboot {{ hostvars[inventory_hostname]['id'] }}
+
+- name: Configure Scaleway instance
+  shell:
+    |-
+      export SCW_CONFIG_PATH=/tmp/config.yaml
+      scw instance server stop {{ hostvars[inventory_hostname]['id'] }} 
+
+
