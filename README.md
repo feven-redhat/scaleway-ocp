@@ -31,7 +31,7 @@ ssh-keygen -f ~/.ssh/scaleway -t ed25519
 
 ## Scaleway configuration
 
-After you have create you scaleay account, Go in the console (https://console.scaleway.com/) and on the top left clik on Create Project and write Openshift. Then click on create.
+After you have create you scaleway account, Go in the console (https://console.scaleway.com/) and on the top left clik on Create Project and write Openshift. Then click on create.
 
 ![create organization](./images/01_create-project.png)
 
@@ -41,6 +41,8 @@ Then you need to create an api key. Click Identity and Access Management (IAM) f
 
 NOTE: You need to keep the key and secret for the following part.
 
+Get Project Id from Project Dashboard / Settings, and copy Project ID
+
 Then Get your organization ID using the following command:
 
 ```shell
@@ -49,11 +51,21 @@ curl -H "X-Auth-Token: <Your secret key>" https://account.scaleway.com/organizat
 
 Get your redhat pull secret at that URL https://console.redhat.com/openshift/install/pull-secret and put it on ~/.pull-secret.
 
+Create an ssh-key
+
+```shell
+ssh-keygen -f ~/.ssh/scaleway -t ed25519
+```
+Go to organisation / ssh keys / add new ssh key, and paste public key ~/.ssh/scaleway.pub, then Add SSH key
+
 ## Create the Infrastructure
 
 ```shell
-terraform apply -var pull_secret=~/.pull-secret -var scaleway_access_key=<Your access KEY> scaleway_secret_key=<Your secret key> -var scaleway_organization_id=<Your organization ID>  -var scaleway_project=openshift -var ssh_key=~/.ssh/scaleway
+terraform apply -var pull_secret=~/.pull-secret -var scaleway_access_key=<Your access KEY> scaleway_secret_key=<Your secret key> -var scaleway_organization_id=<Your organization ID>  -var scaleway_project_id=<Your project Id> -var ssh_key=~/.ssh/scaleway
 ```
+Need to add Bootstrap ip to API Loadbalancer : 
+- Go to Load Balancer instance / API Loadbalancer
+- Go to Backends / Edit / Add api loadbalancer ip to Server IP
 
 ## Create DNS Records
 
