@@ -29,7 +29,7 @@ resource "scaleway_lb_backend" "apps_openshift_backend_80" {
   name = "apps_openshift_backend_80"
   lb_id = scaleway_lb.apps_openshift_lb.id
   forward_port = 80
-  forward_protocol = "http"
+  forward_protocol = "tcp"
   server_ips = local.master_ips
 }
 
@@ -47,7 +47,7 @@ resource "scaleway_lb_backend" "apps_openshift_backend_443" {
   name = "apps_openshift_backend_443"
   lb_id = scaleway_lb.apps_openshift_lb.id
   forward_port = 443
-  forward_protocol = "http"
+  forward_protocol = "tcp"
   server_ips = local.master_ips
 }
 
